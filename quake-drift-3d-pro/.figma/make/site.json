@@ -1,0 +1,10 @@
+{
+  "description": "A 2D visualization app with smooth, polished animations and clearly spaced image components, preserving the layout when input fields are empty or minimized.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

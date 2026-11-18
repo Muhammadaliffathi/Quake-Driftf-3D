@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quake-Drift 3D Pro | Analisis Gempa, Klasifikasi Situs & Story Drift (SNI 1726:2019)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- TOP HEADER -->
+    <header class="top-header px-3 sm:px-5 py-2.5 sticky top-0 z-50 flex items-center justify-between">
+        <button type="button" id="brandToggle" class="brand-trigger" aria-label="Buka atau tutup panel parameter" aria-expanded="false">
+            <div class="bg-gradient-to-br from-teal-400 to-cyan-600 p-2 rounded-xl shadow-lg shadow-teal-500/20 text-white">
+                <i class="fa-solid fa-building-shield text-lg"></i>
+            </div>
+            <div class="text-left">
+                <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white leading-tight">Quake-Drift <span class="text-teal-400">3D Pro</span></h1>
+                <p class="text-[10px] text-slate-400">Klik logo untuk mulai analisis</p>
+            </div>
+        </button>
+
+        <div class="flex items-center gap-2.5">
+            <span id="themeLabel" class="hidden sm:inline text-[11px] font-medium text-slate-400">Mode Malam</span>
+            <button type="button" id="themeToggle" class="theme-switch" aria-label="Ganti Mode Siang dan Malam" title="Ganti Mode Siang / Malam">
+                <span class="theme-switch-thumb">
+                    <i id="themeIcon" class="fa-solid fa-moon"></i>
+                </span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex min-h-[calc(100vh-61px)]">
+        <!-- LEFT VERTICAL NAVIGATION RAIL -->
+        <nav class="left-rail sticky top-[61px] h-[calc(100vh-61px)]" aria-label="Navigasi langkah analisis">
+            <button type="button" class="rail-btn" data-step-target="1" title="1. Klasifikasi Situs & Gempa">
+                <i class="fa-solid fa-city"></i>
+                <span>Situs &<br>Gempa</span>
+            </button>
+            <button type="button" class="rail-btn" data-step-target="2" title="2. Grid Portal & Dimensi">
+                <i class="fa-solid fa-border-all"></i>
+                <span>Grid</span>
+            </button>
+            <button type="button" class="rail-btn" data-step-target="3" title="3. Elemen Struktur & Beban">
+                <i class="fa-solid fa-building"></i>
+                <span>Elemen</span>
+            </button>
+            <button type="button" class="rail-btn" data-step-target="4" title="4. Ringkasan Hasil Analisis">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Hasil</span>
+            </button>
+            <div class="w-8 border-t border-slate-800 my-1"></div>
+            <button type="button" id="btnResetAll" class="rail-btn delete-btn" title="Reset semua input ke nilai awal">
+                <i class="fa-regular fa-trash-can"></i>
+                <span>Delete</span>
+            </button>
+        </nav>
+
+        <!-- EXPANDABLE PARAMETER PANEL -->
+        <aside id="sideDrawer" class="side-drawer closed" aria-label="Panel parameter struktur">
+            <div id="parameterPanel" class="p-4 space-y-4">
+                <div class="print-heading hidden">
+                    <h1 class="text-xl font-bold">Quake-Drift 3D Pro</h1>
+                    <p>Ringkasan hasil analisis seismik SNI 1726:2019</p>
+                </div>
+
+                <form id="quakeForm" class="space-y-4">
+                    <!-- STEP 1 -->
+                    <div data-form-step="1" class="bg-slate-800/40 p-3.5 rounded-xl border border-slate-700/50 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400">1. Klasifikasi Situs & Gempa</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] text-slate-400">Tabel 5, 6, 7 SNI 2019</span>
+                                <button type="button" id="closeDrawerBtn1" class="text-slate-400 hover:text-white text-xs px-1" title="Tutup Panel">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Kelas Situs (Soil Class)</label>
+                            <select id="soilClass" class="w-full bg-slate-950 border border-blue-500/50 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 font-semibold">
+                                <option value="SA">SA - Batuan Keras (Hard Rock)</option>
+                                <option value="SB">SB - Batuan (Rock)</option>
+                                <option value="SC">SC - Tanah Keras, Padat & Batuan Lunak</option>
+                                <option value="SD" selected>SD - Tanah Sedang (Medium Stiff Soil)</option>
+                                <option value="SE">SE - Tanah Lunak (Soft Clay)</option>
+                                <option value="SF">SF - Tanah Khusus (Membutuhkan Analisis Spesifik)</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">S<sub>s</sub> Terpetakan (g)</label>
+                                <input type="number" step="0.01" id="ss_map" value="0.95" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                                <span class="text-[9px] text-slate-400">Periode Pendek</span>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">S<sub>1</sub> Terpetakan (g)</label>
+                                <input type="number" step="0.01" id="s1_map" value="0.45" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                                <span class="text-[9px] text-slate-400">Periode 1 Detik</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950/70 p-2.5 rounded-lg border border-slate-800 text-[11px] space-y-1 text-slate-300">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Faktor Situs (F<sub>a</sub>):</span>
+                                <strong id="valFa" class="text-blue-400">1.20</strong>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Faktor Situs (F<sub>v</sub>):</span>
+                                <strong id="valFv" class="text-blue-400">1.90</strong>
+                            </div>
+                            <div class="flex justify-between border-t border-slate-800 pt-1">
+                                <span class="text-slate-400">S<sub>MS</sub> / S<sub>M1</sub>:</span>
+                                <strong id="valSM" class="text-emerald-400">1.140g / 0.855g</strong>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">S<sub>DS</sub> / S<sub>D1</sub> (Desain):</span>
+                                <strong id="valSD" class="text-emerald-400 font-bold">0.760g / 0.570g</strong>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-300 mb-1">Kategori Risiko & I<sub>e</sub> (Tabel 3 & 4)</label>
+                            <select id="kategoriRisiko" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                                <option value="1.0">Kategori I / II (Ie = 1.0) - Perumahan, Kantor, Toko</option>
+                                <option value="1.25">Kategori III (Ie = 1.25) - Bioskop, Sekolah, Stadion</option>
+                                <option value="1.50">Kategori IV (Ie = 1.50) - Rumah Sakit, Fasilitas Darurat</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">Faktor Reduksi (R)</label>
+                                <input type="number" step="0.1" id="r_val" value="8.0" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">Pembesar (C<sub>d</sub>)</label>
+                                <input type="number" step="0.1" id="cd" value="5.5" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-700/60 pt-2.5">
+                            <label class="block text-[11px] font-medium text-slate-300 mb-1">Tipe Struktur (Tabel 8.3 C<sub>t</sub> & x SNI 1726:2019)</label>
+                            <div class="text-[10px] text-slate-400 mb-1.5 italic bg-slate-950/60 p-2 rounded border border-slate-800 leading-relaxed">
+                                "Sistem rangka pemikul momen di mana rangka memikul 100 persen gaya gempa yang disyaratkan dan tidak dilingkupi atau dihubungkan dengan komponen yang lebih kaku..."
+                            </div>
+                            <select id="tipeStruktur" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                                <optgroup label="Sistem Rangka Pemikul Momen 100% Gaya Gempa:">
+                                    <option value="baja">Rangka baja pemikul momen (Ct = 0,0724, x = 0,8)</option>
+                                    <option value="beton" selected>Rangka beton pemikul momen (Ct = 0,0466, x = 0,9)</option>
+                                    <option value="eksentris">Rangka baja dengan bresing eksentris (Ct = 0,0731, x = 0,75)</option>
+                                    <option value="brf">Rangka baja dengan bresing terkekang terhadap tekuk (Ct = 0,0731, x = 0,75)</option>
+                                </optgroup>
+                                <optgroup label="Sistem Lainnya:">
+                                    <option value="lainnya">Semua sistem struktur lainnya (Ct = 0,0488, x = 0,75)</option>
+                                </optgroup>
+                            </select>
+                            <div class="mt-1 flex justify-between text-[10px] text-slate-400">
+                                <span>Nilai C<sub>t</sub>: <strong id="valCt" class="text-blue-400">0.0466</strong></span>
+                                <span>Nilai x: <strong id="valX" class="text-blue-400">0.90</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-950/40 border border-blue-900/60 p-2.5 rounded-lg">
+                            <div class="flex items-center justify-between gap-2">
+                                <label for="kdsOverride" class="text-[11px] text-slate-300 font-medium">Kategori Desain Seismik (KDS)</label>
+                                <span id="kdsBadge" class="bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded shadow">KDS D</span>
+                            </div>
+                            <select id="kdsOverride" class="w-full mt-2 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                                <option value="A">KDS A</option>
+                                <option value="B">KDS B</option>
+                                <option value="C">KDS C</option>
+                                <option value="D" selected>KDS D</option>
+                                <option value="E">KDS E</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2 -->
+                    <div data-form-step="2" class="hidden bg-slate-800/40 p-3.5 rounded-xl border border-slate-700/50 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400">2. Grid Portal & Dimensi</h3>
+                            <button type="button" id="closeDrawerBtn2" class="text-slate-400 hover:text-white text-xs px-1" title="Tutup Panel">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">Panjang L<sub>x</sub> (m)</label>
+                                <input type="number" id="lengthX" value="30" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">Lebar L<sub>y</sub> (m)</label>
+                                <input type="number" id="lengthY" value="15" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">Portal X (N<sub>px</sub>)</label>
+                                <input type="number" id="npx" value="4" min="1" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                                <span id="npxHint" class="text-[10px] text-slate-400">F<sub>ix</sub> = F / 4</span>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">Portal Y (N<sub>py</sub>)</label>
+                                <input type="number" id="npy" value="6" min="1" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                                <span id="npyHint" class="text-[10px] text-slate-400">F<sub>iy</sub> = F / 6</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 border-t border-slate-700/60 pt-2.5">
+                            <div class="flex items-center justify-between gap-2">
+                                <label class="block text-[11px] font-semibold text-slate-300">Jumlah Lantai (N)</label>
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" id="btnRemoveFloor" class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:border-rose-400 hover:text-rose-300 text-xs font-bold flex items-center justify-center" title="Kurangi 1 Lantai">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <input type="number" id="numFloors" value="6" min="1" max="30" required class="w-16 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white text-center font-bold focus:outline-none">
+                                    <button type="button" id="btnAddFloor" class="px-2.5 h-7 rounded-lg bg-teal-500/20 border border-teal-400/40 text-teal-300 hover:bg-teal-500/30 text-[11px] font-bold flex items-center gap-1" title="Tambah 1 Lantai">
+                                        <i class="fa-solid fa-plus"></i> Lantai
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="pt-1">
+                                <label class="block text-[11px] font-semibold text-blue-300 mb-1">Metode Penentuan Beban Seismik (W<sub>x</sub>)</label>
+                                <select id="bebanMode" class="w-full bg-slate-950 border border-blue-500/50 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                                    <option value="auto">Hitung Otomatis dari Komponen Elemen</option>
+                                    <option value="manual" selected>Input Manual Tinggi & Beban per Lantai (kN)</option>
+                                </select>
+                            </div>
+
+                            <div class="pt-1">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-[11px] font-medium text-slate-300">Konfigurasi Tiap Lantai</span>
+                                    <button type="button" id="btnCopyFloor1" class="text-[10px] text-teal-400 hover:underline font-semibold" title="Samakan nilai Lantai 1 ke semua lantai">
+                                        Samakan ke semua lantai
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-12 gap-1.5 px-2 pb-1 text-[10px] font-bold text-slate-400 uppercase">
+                                    <div class="col-span-4">Lantai</div>
+                                    <div class="col-span-4 text-center">Tinggi (m)</div>
+                                    <div id="colHeaderLoad" class="col-span-4 text-center text-teal-300">Beban W<sub>x</sub> (kN)</div>
+                                </div>
+                                <div id="floorConfigContainer" class="space-y-1.5 max-h-64 overflow-y-auto pr-1 bg-slate-950/40 p-2 rounded-xl border border-slate-800"></div>
+                                <p id="floorLoadHelperText" class="text-[10px] text-slate-400 mt-1.5">
+                                    Anda dapat menambahkan lantai sendiri dan mengatur tinggi h<sub>i</sub> serta beban W<sub>x</sub> secara mandiri pada setiap lantai.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3 -->
+                    <div data-form-step="3" class="hidden bg-slate-800/40 p-3.5 rounded-xl border border-slate-700/50 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400">3. Elemen & Beban Komponen</h3>
+                            <button type="button" id="closeDrawerBtn3" class="text-slate-400 hover:text-white text-xs px-1" title="Tutup Panel">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="element-visual">
+                                <div class="text-[10px] font-bold text-teal-300 mb-1">Potongan kolom</div>
+                                <svg viewBox="0 0 280 116" role="img" aria-label="Ilustrasi potongan kolom">
+                                    <rect x="101" y="12" width="78" height="78" rx="7" fill="#17344a" stroke="#5eead4" stroke-width="2"/>
+                                    <circle cx="114" cy="25" r="4" fill="#f59e0b"/><circle cx="166" cy="25" r="4" fill="#f59e0b"/>
+                                    <circle cx="114" cy="77" r="4" fill="#f59e0b"/><circle cx="166" cy="77" r="4" fill="#f59e0b"/>
+                                    <path d="M94 12h-12m12 78h-12m6-78v78" stroke="#64748b" stroke-width="1"/>
+                                    <text x="74" y="54" fill="#94a3b8" font-size="9" text-anchor="middle">h</text>
+                                    <text x="140" y="108" fill="#94a3b8" font-size="9" text-anchor="middle">KOLOM b × h</text>
+                                </svg>
+                            </div>
+                            <div class="element-visual">
+                                <div class="text-[10px] font-bold text-sky-300 mb-1">Potongan balok</div>
+                                <svg viewBox="0 0 280 116" role="img" aria-label="Ilustrasi potongan balok">
+                                    <rect x="72" y="27" width="136" height="58" rx="7" fill="#17344a" stroke="#38bdf8" stroke-width="2"/>
+                                    <circle cx="87" cy="41" r="4" fill="#f59e0b"/><circle cx="193" cy="41" r="4" fill="#f59e0b"/>
+                                    <circle cx="87" cy="71" r="4" fill="#f59e0b"/><circle cx="193" cy="71" r="4" fill="#f59e0b"/>
+                                    <path d="M72 92v9m136-9v9M72 97h136" stroke="#64748b" stroke-width="1"/>
+                                    <text x="140" y="112" fill="#94a3b8" font-size="9" text-anchor="middle">BALOK b × h</text>
+                                </svg>
+                            </div>
+                            <div class="element-visual">
+                                <div class="text-[10px] font-bold text-teal-300 mb-1">Tebal pelat sisi</div>
+                                <svg viewBox="0 0 180 108" role="img" aria-label="Ilustrasi ketebalan pelat yang berubah">
+                                    <path d="M18 58 L92 28 L164 48 L90 78 Z" fill="#12344a" stroke="#38bdf8" stroke-width="2"/>
+                                    <path id="slabThicknessShape" d="M18 58 L90 78 L90 90 L18 70 Z M90 78 L164 48 L164 60 L90 90 Z" fill="#0f766e" opacity=".9"/>
+                                    <line x1="169" y1="48" x2="169" y2="60" stroke="#f59e0b" stroke-width="2"/>
+                                    <path d="M165 51 L169 47 L173 51 M165 57 L169 61 L173 57" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+                                    <text id="slabThicknessLabel" x="126" y="100" fill="#fbbf24" font-size="10" text-anchor="middle">t = 0.12 m</text>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">Kolom b x h (m)</label>
+                                <div class="flex gap-1">
+                                    <input type="number" step="0.05" id="bKolom" value="0.6" class="w-1/2 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
+                                    <input type="number" step="0.05" id="hKolom" value="0.6" class="w-1/2 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">Balok b x h (m)</label>
+                                <div class="flex gap-1">
+                                    <input type="number" step="0.05" id="bBalok" value="0.4" class="w-1/2 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
+                                    <input type="number" step="0.05" id="hBalok" value="0.6" class="w-1/2 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">Tebal Pelat (m)</label>
+                                <input type="number" step="0.01" id="tPelat" value="0.12" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-300 mb-1">Berat Jenis Beton (kg/m³)</label>
+                                <input type="number" id="gammaBeton" value="2400" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white">
+                            </div>
+                        </div>
+
+                        <div class="text-[11px] font-semibold text-slate-400 border-t border-slate-700/50 pt-2">Beban Tambahan & Finishing (kg/m²)</div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="text-[10px] text-slate-400">Dinding (kg/m²)</label>
+                                <input type="number" id="qDinding" value="250" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400">Plafond (kg/m²)</label>
+                                <input type="number" id="qPlafond" value="11" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400">Spesi (kg/m²)</label>
+                                <input type="number" id="qSpesi" value="21" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400">Keramik (kg/m²)</label>
+                                <input type="number" id="qKeramik" value="24" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4 -->
+                    <div data-form-step="4" class="hidden space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-white">4. Ringkasan Hasil</h3>
+                                <p class="text-[10px] text-slate-400">Tabel berat, gaya lateral & KML</p>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" id="exportKml" class="no-print bg-teal-500/15 text-teal-300 border border-teal-400/30 px-2.5 py-1.5 rounded-lg text-[10px] font-bold hover:bg-teal-500/25" title="Ekspor koordinat struktur ke format KML">
+                                    <i class="fa-solid fa-earth-asia mr-1"></i> KML
+                                </button>
+                                <button type="button" id="exportPdf" class="no-print bg-rose-500/15 text-rose-300 border border-rose-400/30 px-2.5 py-1.5 rounded-lg text-[10px] font-bold hover:bg-rose-500/25">
+                                    <i class="fa-solid fa-file-pdf mr-1"></i> PDF
+                                </button>
+                                <button type="button" id="closeDrawerBtn4" class="text-slate-400 hover:text-white text-xs px-1" title="Tutup Panel">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="drawer-result-card"><div class="result-label">Berat Seismik</div><div id="pdfWeight" class="text-sm font-bold text-white mt-1">—</div></div>
+                            <div class="drawer-result-card"><div class="result-label">Geser Dasar</div><div id="pdfShear" class="text-sm font-bold text-white mt-1">—</div></div>
+                            <div class="drawer-result-card"><div class="result-label">Periode</div><div id="pdfPeriod" class="text-sm font-bold text-white mt-1">—</div></div>
+                            <div class="drawer-result-card"><div class="result-label">Kategori</div><div id="pdfKds" class="text-sm font-bold text-white mt-1">—</div></div>
+                        </div>
+
+                        <div id="resultsStepContent" class="space-y-4"></div>
+
+                        <button type="button" id="btnCalculate" class="w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-400 hover:to-cyan-500 active:scale-[.99] text-slate-950 font-extrabold py-2.5 px-4 rounded-xl shadow-lg shadow-teal-500/20 transition flex items-center justify-center gap-2 text-xs">
+                            <i class="fa-solid fa-bolt"></i> Perbarui Analisis
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT VIEWPORT -->
+        <main class="flex-1 p-4 sm:p-5 overflow-x-hidden flex flex-col gap-5">
+            <div id="overview" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
+                <div class="result-card" style="--accent:#2dd4bf">
+                    <div class="result-label">Berat Seismik</div>
+                    <div id="overviewWeight" class="result-value">27.000 kN</div>
+                    <div class="result-note">Total berat efektif gedung</div>
+                </div>
+                <div class="result-card" style="--accent:#38bdf8">
+                    <div class="result-label">Geser Dasar</div>
+                    <div id="overviewShear" class="result-value">2.565 kN</div>
+                    <div class="result-note">Gaya lateral total (V)</div>
+                </div>
+                <div class="result-card" style="--accent:#f59e0b">
+                    <div class="result-label">Periode Struktur</div>
+                    <div id="overviewPeriod" class="result-value">0.72 detik</div>
+                    <div class="result-note">Periode fundamental (T<sub>a</sub>)</div>
+                </div>
+                <div class="result-card" style="--accent:#fb7185">
+                    <div class="result-label">Desain Seismik</div>
+                    <div id="overviewKds" class="result-value">KDS D</div>
+                    <div class="result-note">Kategori desain aktif</div>
+                </div>
+            </div>
+
+            <div id="model3d" class="glass-panel rounded-2xl overflow-hidden flex flex-col">
+                <div class="bg-slate-800/60 px-4 sm:px-5 py-3 border-b border-slate-800 flex flex-wrap justify-between items-center gap-2">
+                    <div class="flex items-center gap-2 text-white font-semibold text-sm sm:text-base">
+                        <i class="fa-solid fa-cube text-blue-400"></i>
+                        <h2>Visualisasi 3D Struktur Gedung & Vector Gaya Lateral</h2>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 text-xs">
+                        <button type="button" id="btnToggleQuake" class="bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/40 px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5">
+                            <i id="quakeBtnIcon" class="fa-solid fa-wave-square"></i>
+                            <span id="quakeBtnText">Mulai Simulasi Gempa</span>
+                        </button>
+                        <span class="flex items-center gap-1.5 text-red-400"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> F<sub>ix</sub> (Arah X)</span>
+                        <span class="flex items-center gap-1.5 text-amber-400"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> F<sub>iy</sub> (Arah Y)</span>
+                        <span class="text-slate-400 bg-slate-800 px-2.5 py-1 rounded border border-slate-700"><i class="fa-solid fa-rotate mr-1"></i> Drag / Scroll untuk Rotasi & Zoom</span>
+                    </div>
+                </div>
+                <div id="canvas3dContainer" class="w-full h-[430px] relative bg-slate-950">
+                    <div id="modelTooltip" class="model-tooltip"></div>
+                    <div class="analysis-empty-state" data-empty-state>
+                        <div><i class="fa-solid fa-pen-ruler"></i><strong>Data struktur belum lengkap</strong><span>Lengkapi semua input wajib untuk menampilkan visualisasi analisis.</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="portal2d" class="glass-panel rounded-2xl p-4 sm:p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h3 class="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-diagram-project text-blue-400"></i>
+                        Visualisasi Elevasi Portal 2D (Gaya Gempa Per Portal F<sub>ix</sub> & F<sub>iy</sub>)
+                    </h3>
+                    <span class="text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded border border-slate-700">Responsif SNI 1726</span>
+                </div>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 bg-slate-950 p-3 sm:p-5 rounded-xl border border-slate-800">
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs font-bold text-red-400 mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-arrow-right"></i> Elevasi Portal Arah X (F<sub>ix</sub>)
+                        </span>
+                        <div class="portal-canvas-wrap">
+                            <canvas id="canvas2dX" class="w-full h-[430px] bg-slate-900 rounded-lg border border-slate-800"></canvas>
+                            <div class="analysis-empty-state" data-empty-state>
+                                <div><i class="fa-solid fa-chart-column"></i><strong>Belum ada visualisasi</strong><span>Masukkan data struktur terlebih dahulu.</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs font-bold text-amber-400 mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-arrow-right"></i> Elevasi Portal Arah Y (F<sub>iy</sub>)
+                        </span>
+                        <div class="portal-canvas-wrap">
+                            <canvas id="canvas2dY" class="w-full h-[430px] bg-slate-900 rounded-lg border border-slate-800"></canvas>
+                            <div class="analysis-empty-state" data-empty-state>
+                                <div><i class="fa-solid fa-chart-column"></i><strong>Belum ada visualisasi</strong><span>Masukkan data struktur terlebih dahulu.</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="weightResultsCard" class="glass-panel rounded-2xl p-4 sm:p-5 space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-3">
+                    <h3 class="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-weight-hanging text-blue-400"></i>
+                        Tabel Rekapitulasi Rincian Beban Gedung (W<sub>x</sub>)
+                    </h3>
+                    <div id="totalSeismicWeightSummary" class="text-xs sm:text-sm font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 px-3 py-1.5 rounded-lg">
+                        Total Berat Seismik (W): - kN
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="tableWeightBreakdown" class="w-full text-xs text-center border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800 text-slate-300 border-b border-slate-700">
+                                <th class="p-2.5 text-left">Komponen / Elemen</th>
+                                <th class="p-2.5">Lantai Atap W<sub>N</sub> (kg)</th>
+                                <th class="p-2.5">Lantai Tipikal W<sub>2..N-1</sub> (kg)</th>
+                                <th class="p-2.5">Lantai 1 W<sub>1</sub> (kg)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-slate-300"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="distributionResultsCard" class="glass-panel rounded-2xl p-4 sm:p-5 space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-3">
+                    <h3 class="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-table-list text-blue-400"></i>
+                        Tabel Distribusi Vertikal Gaya Lateral Gempa (F<sub>x</sub>) & Portal
+                    </h3>
+                    <div id="baseShearSummary" class="text-xs sm:text-sm font-semibold bg-blue-950/80 text-blue-300 border border-blue-800/60 px-3 py-1.5 rounded-lg">
+                        Gaya Geser Dasar (V): - kN
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="tableFx" class="w-full text-xs text-center border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800 text-slate-300 border-b border-slate-700">
+                                <th class="p-2.5">Lantai</th>
+                                <th class="p-2.5">Tinggi Lantai h<sub>i</sub> (m)</th>
+                                <th class="p-2.5">h<sub>x</sub> (m)</th>
+                                <th class="p-2.5">w<sub>x</sub> (kN)</th>
+                                <th class="p-2.5">C<sub>vx</sub></th>
+                                <th class="p-2.5 text-blue-400 font-bold">F<sub>x</sub> Total (kN)</th>
+                                <th class="p-2.5 text-red-400 font-bold">F<sub>ix</sub> = F / N<sub>px</sub> (kN)</th>
+                                <th class="p-2.5 text-amber-400 font-bold">F<sub>iy</sub> = F / N<sub>py</sub> (kN)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-slate-300"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
